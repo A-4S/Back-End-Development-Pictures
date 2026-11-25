@@ -35,7 +35,7 @@ def count():
 ######################################################################
 @app.route("/picture", methods=["GET"])
 def get_pictures():
-    pass
+    return jsonify(data), 200
 
 ######################################################################
 # GET A PICTURE
@@ -44,7 +44,9 @@ def get_pictures():
 
 @app.route("/picture/<int:id>", methods=["GET"])
 def get_picture_by_id(id):
-    pass
+    item = next(i for i in data if i['id'] == id)
+
+    return item, 200
 
 
 ######################################################################
@@ -52,7 +54,18 @@ def get_picture_by_id(id):
 ######################################################################
 @app.route("/picture", methods=["POST"])
 def create_picture():
-    pass
+    target = request.json
+
+    try:
+        next(i for i in data if i['id'] == target['id'])
+
+        return {"Message": f"picture with id {target['id']} already present"}, 302
+
+    except StopIteration:
+        data.append(target)
+
+        return jsonify(target), 201
+
 
 ######################################################################
 # UPDATE A PICTURE
@@ -61,11 +74,28 @@ def create_picture():
 
 @app.route("/picture/<int:id>", methods=["PUT"])
 def update_picture(id):
-    pass
+    target = request.json
+
+    pos = next(i[0] for i in enumerate(data) if i[1]['id'] == target['id'])
+
+    data[pos].update(target)
+
+    return jsonify(data[pos]), 200
 
 ######################################################################
 # DELETE A PICTURE
 ######################################################################
 @app.route("/picture/<int:id>", methods=["DELETE"])
 def delete_picture(id):
-    pass
+    pos = next(i[0] for i in enumerate(data) if i[1]['id'] == id)
+
+    data.pop(pos)
+
+    return jsonify({}), 204
+
+######################################################################
+# 404 HANDLER (StopIteration)
+######################################################################
+@app.errorhandler(StopIteration)
+def stop_iteration(e):
+    return {"message": "picture not found"}, 404
